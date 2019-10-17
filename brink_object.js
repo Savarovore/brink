@@ -3,53 +3,38 @@ var validInput = document.getElementById('validInput'),
     types = {};
     index = [];
 
-function createBrink (type, childTypes, title){
-
-    // Controls the instanciation of Brinks
-    // si child types n´est pas definit... ?
-
-    if (index.includes(title)){
-        alert('this title is taken.');
-        return;
-    }
 
 
-    if(!(type in types)){
-        types[type] = new Brink(type, childTypes);
-    }
+function Framework(name) {
 
-    const template = types[type];
+    // A Framework answers a problem
 
-    if(template.instances_nb === template.max_instances){
-        alert('the maximum number of ' + template.type + 'has already been reached.');
-        return;
-    }
-
-    let brinkInstance = Object.create(template);
-    brinkInstance.title = title;
-    brinkInstance.father = "";
-    brinkInstance.childs = [];
-
-    template.instances_nb ++;
-    index.push(title);
-
-
-    return brinkInstance;
+    // class components
+    this.name = name;
 }
 
 
-function Brink(type, childTypes, max_instances) {
 
-    //mettre des warnings sur la modification des childs types
+function LogicalElement(type, childTypes, fatherTypes, max_instances) {
+
+    // A LogicalElement is the main type of object in a project
+    // In a simple Project with 2 LogicalElements, the first one could be "Problem" 
+    // and the 2nd one "Solution"
 
     // class components
     this.type = type;
     this.childTypes = childTypes;
+    this.fatherTypes = fatherTypes;
     this.max_instances = 10;
     this.instances_nb = 0;
 }
 
-Brink.prototype.adopt = function(child){
+LogicalElement.prototype.adopt = function(child){
+
+    // A LogicalElement can adopt as a child an other LogicalElement
+    // to reflect the logical relation between the 2 elements
+    // For example "Problem" could adopt "Solution" as child
+
     if(this.childTypes.includes(child.type)){
         child.father = this;
         this.childs.push(child);
@@ -59,7 +44,7 @@ Brink.prototype.adopt = function(child){
 };
 
 
-Brink.prototype.print = function(){
+LogicalElement.prototype.print = function(){
     let text = "";
     let father = this;
     while (father.father){
@@ -75,17 +60,44 @@ Brink.prototype.print = function(){
     }
 };
 
-Brink.prototype.suggest = function(child){
+LogicalElement.prototype.suggest = function(child){
     alert('You could add a ' + child.childTypes[0]);
 };
 
-died = createBrink('Problem:', 'why?', 'I died');
-plain = createBrink('why?', 'why?', 'The plain crashed');
-motor = createBrink('why?', 'zob', 'The motor broke');
-part = createBrink('why?', 'zizi', 'A part was missing');
+
+function createLogicalElement (type, childTypes, title){
+
+    // Controls the instanciation of Brinks
+    // si child types n´est pas definit... ?
+
+    if (index.includes(title)){
+        alert('this title is taken.');
+        return;
+    }
 
 
-died.adopt(plain);
-died.childs[0].adopt(motor);
-died.childs[0].childs[0].adopt(part);
-died.print();
+    if(!(type in types)){
+        types[type] = new LogicalElement(type, childTypes);
+    }
+
+    const template = types[type];
+
+    if(template.instances_nb === template.max_instances){
+        alert('the maximum number of ' + template.type + 'has already been reached.');
+        return;
+    }
+
+    let LogicalElementInstance = Object.create(template);
+    LogicalElementInstance.title = title;
+    LogicalElementInstance.father = "";
+    LogicalElementInstance.childs = [];
+
+    template.instances_nb ++;
+    index.push(title);
+
+
+    return LogicalElement;
+}
+
+
+
