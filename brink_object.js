@@ -1,16 +1,4 @@
-function Framework(name) {
-
-    // A Framework is designed to solve a problem in a structured way
-    // Frameworks are used generated and can be stored in public libraries
-
-    // class components
-    this.name = name;
-    this.logicalElements = {};
-}
-
-
-
-function LogicalElement(type, creator) {
+function LogicalElement(type) {
 
     // A LogicalElement is the main building block of a Framework
     // A simple Framework might have only 2 LogicalElements:
@@ -22,7 +10,6 @@ function LogicalElement(type, creator) {
 
     // parametrized attributes
     this.type = type;
-    this.creator = creator;
 
     // relationship attributes
     this.childTypes = [];
@@ -39,8 +26,10 @@ function LogicalElement(type, creator) {
 
 LogicalElement.prototype.instanciate = function(title){
 
-    this.testMaxInstances();
-    this.testTitle(title);
+    testMaxInstances = this.testMaxInstances();
+    if (!testMaxInstances) {return;}
+    testTitle = this.testTitle(title);
+    if (!testTitle) {return;}
 
     let instance = Object.create(this);
     instance.title = title;
@@ -53,8 +42,10 @@ LogicalElement.prototype.testMaxInstances = function(){
 
     if (this.instances.length === this.maxInstances){
         alert('the maximum number of ' + this.type + 'has already been reached.');
-        return;
-    } 
+        return false;
+    } else {
+        return true;
+    }
 
 };
 
@@ -63,8 +54,10 @@ LogicalElement.prototype.testTitle = function(title){
 
     if (title in Object.keys(this.logicalElements)){
         alert('There is already a ' + this.type + ' with the title ' + title + '.');
-        return;
-    } 
+        return false;
+    } else {
+        return true;
+    }
 
 };
 
@@ -73,8 +66,10 @@ LogicalElement.prototype.testMaxChilds = function(){
 
     if (this.childs.length === this.maxChild){
         alert('This ' + title + ' has reached the maximum number of elements depending on him.');
-        return;
-    } 
+        return false;
+    } else {
+        return true;
+    }
 
 };
 
@@ -83,9 +78,12 @@ LogicalElement.prototype.testMaxFathers = function(){
 
     if (this.fathers.length === this.maxFathers){
         alert('This ' + title + ' has reached the maximum number of elements it can depend on.');
-        return;
+        return false;
+    } else {
+        return true;
     } 
 
+    
 };
 
 
@@ -128,13 +126,30 @@ LogicalElement.prototype.suggest = function(child){
 
 
 
+function Framework(name) {
 
-// MODEL FRAMEWORK METHODS
+    // A Framework is designed to solve a problem in a structured way
+    // Frameworks are used generated and can be stored in public libraries
+    // Frameworks are composed of LogicalElements
+
+    // class components
+    this.name = name;
+    this.logicalElements = {};
+
+}
+
+
+
 
 Framework.prototype.createLogicalElement = function(type){
-    if(!(type in Object.keys(this.logicalElements))){
-        this.logicalElements[type] = new LogicalElement(type);
+
+    if(type in Object.keys(this.logicalElements)){
+        alert('This framework already has a logical element called ' + type + '.');
+        return;
     }
+
+    this.logicalElements[type] = new LogicalElement(type);
+
 };
 
 Framework.prototype.bindLogicalElements = function(father, child){
