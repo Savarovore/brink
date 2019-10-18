@@ -15,8 +15,8 @@ function Element(type, framework) {
     // Several elements can be put in relation through a connector
 
     // parametrized attributes
-    this.type = type;
     this.framework = framework;
+    this.type = type;
 
     // relationship attributes
     this.childTypes = []; // the autorized child types when including the Element in a connector  
@@ -113,11 +113,11 @@ Element.prototype.suggest = function(child){
 
 
 
-function Connector(fatherType, childType, logicalNature){
+function Connector(framework, logicalNature){
 
-    this.fatherType = fatherType;
-    this.childType = childType;
-    this.logicalNature = logicalNature;
+    // Connectors must respect the rules (childTypes, fatherTypes) defined at Element level
+    this.framework = framework
+    this.logicalNature = logicalNature; // Qualifies the nature of the link between the Elements
 
     this.instances = []
 
@@ -126,12 +126,12 @@ function Connector(fatherType, childType, logicalNature){
 }
 
 
-Connector.prototype.instanciate = function(fathers, childs){
+Connector.prototype.instanciate = function(fathers, children){
 
     let instance = Object.create(this);
 
-    this.fathers.push(fathers);
-    this.childs.push(childs);
+    this.fathers = fathers;
+    this.children = children;
 
     this.instances.push(instance);
 
@@ -148,7 +148,7 @@ function Framework(name) {
     // class components
     this.name = name;
     this.elements = {};
-    this.connectors = {};
+    this.connectors = [];
 
 }
 
@@ -179,7 +179,7 @@ Framework.prototype.bindElements = function(father, child){
         alert('The relation schema must be updated to allow this type of connection.');
     }
 
-}
+};
 
 
 
@@ -187,38 +187,41 @@ Framework.prototype.getFathers = function(element){
 
     fathers = [];
 
-    function findFather(connector){
-        if (connector.child === element){
+    function findFathers(instance){
+        if (instance.children.includes(element){
             fathers = fathers.concat(connector.fathers)
-        }
+        }        
     }
 
-    connectors.forEach(findFather);
+    for (var i = 0, iLen=this.connectors.length; i<iLen; i++){
+        instances = this.connectors[i].instances;
+        instances.forEach(findFathers);
+    }
 
     // would be useful to remove duplicates
-
     return fathers;
 
-} 
-
-
+};
 
 Framework.prototype.getChildren = function(element){
 
-    childs = [];
+    children = [];
 
-    function findChildren(connector){
-        if (connector.father === element){
-            childs = childs.concat(connector.childs)
-        }
+    function findChildren(instance){
+        if (instance.fathers.includes(element){
+            children = children.concat(connector.children)
+        }        
     }
 
-    connectors.forEach(findFather);
+    for (var i = 0, iLen=this.connectors.length; i<iLen; i++){
+        instances = this.connectors[i].instances;
+        instances.forEach(findChildren);
+    }
 
     // would be useful to remove duplicates
-
-    return childs;
+    return children;
 
 } 
+
 
 
