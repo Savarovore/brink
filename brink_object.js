@@ -1,15 +1,7 @@
-var validInput = document.getElementById('validInput'),
-    console_div = document.getElementById('console_div'),
-    types = {};
-
-
-
-
 function Framework(name) {
 
     // A Framework is designed to solve a problem in a structured way
     // Frameworks are used generated and can be stored in public libraries
-    //
 
     // class components
     this.name = name;
@@ -26,6 +18,7 @@ function LogicalElement(type, creator) {
     // - the 2nd one could have the type "Solution"
     // A new template is generated using the keyword "new"
     // Once a template generated, multiple instances can be created using the method "Object.create()"
+    // These instances are stored within the template
 
     // parametrized attributes
     this.type = type;
@@ -39,10 +32,24 @@ function LogicalElement(type, creator) {
 
     // control attributes
     this.maxInstances = maxInstances;
-    this.instances = []
+    this.instances = {}
 }
 
-LogicalElement.prototype.testMaxInstances = function(child){
+
+
+LogicalElement.prototype.instanciate = function(title){
+
+    this.testMaxInstances();
+    this.testTitle(title);
+
+    let instance = Object.create(this);
+    instance.title = title;
+
+    this.instances[title] = instance;
+};
+
+
+LogicalElement.prototype.testMaxInstances = function(){
 
     if (this.instances.length === this.maxInstances){
         alert('the maximum number of ' + this.type + 'has already been reached.');
@@ -84,11 +91,6 @@ LogicalElement.prototype.testMaxFathers = function(){
 
 
 LogicalElement.prototype._becomeFather = function(child){
-
-    // A LogicalElement can become father of an other LogicalElement
-    // to reflect a logical relation between the 2 elements
-    // For example "Problem" could become the father of a "Solution"
-    // It is a reciprocal transasctional process
 
     this.childs.push(child);
 
@@ -136,30 +138,16 @@ Framework.prototype.createLogicalElement = function(type){
 };
 
 Framework.prototype.bindLogicalElements = function(father, child){
+
+    // A LogicalElement can become father of an other LogicalElement
+    // to reflect a logical relation between the 2 elements
+    // For example "Problem" could become the father of a "Solution"
+    // It is a reciprocal transasctional process
+
     if(father.childTypes.includes(child.type) && child.fatherTypes.includes(father.type)){
         father._becomeFather(child)
         child._becomechild(father)
     }
 }
-
-
-// INSTANCES FRAMEWORK METHODS
-
-Framework.prototype.instanciateLogicalElement = function(type, title){
-
-    this.testMaxInstances(type);
-    this.testTitle(title);
-
-    const logicalElementTemplate = this.logicalElements[type];
-
-    let logicalElementInstance = Object.create(logicalElementTemplate);
-
-    logicalElementInstance.title = title;
-    logicalElementInstance.fathers = [];
-    logicalElementInstance.childs = [];
-
-    logicalElements[title] = logicalElementInstance;
-};
-
 
 
