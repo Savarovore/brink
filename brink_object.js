@@ -23,7 +23,6 @@ function LogicalElement(type) {
 }
 
 
-
 LogicalElement.prototype.instanciate = function(title){
 
     testMaxInstances = this.testMaxInstances();
@@ -87,7 +86,6 @@ LogicalElement.prototype.testMaxFathers = function(){
 };
 
 
-
 LogicalElement.prototype._becomeFather = function(child){
 
     this.childs.push(child);
@@ -102,21 +100,6 @@ LogicalElement.prototype._becomeChild = function(father){
 };
 
 
-LogicalElement.prototype.print = function(){
-    let text = "";
-    let father = this;
-    while (father.father){
-        father = father.father;
-        text = father.type + ' ' + father.title + ' >>> ' + text;
-    }
-
-    console_div.innerHTML += text + ' ' + this.type + '<strong>' + this.title + '</strong>';
-
-    for (let child_nb = 0, len = this.childs.length; child_nb<len; child_nb++){
-        console_div.innerHTML += '<br/>' + child_nb + ') ';
-        this.childs[child_nb].print();
-    }
-};
 
 LogicalElement.prototype.suggest = function(child){
     alert('You could add a ' + child.childTypes[0]);
@@ -139,8 +122,6 @@ function Framework(name) {
 }
 
 
-
-
 Framework.prototype.createLogicalElement = function(type){
 
     if(type in Object.keys(this.logicalElements)){
@@ -151,6 +132,7 @@ Framework.prototype.createLogicalElement = function(type){
     this.logicalElements[type] = new LogicalElement(type);
 
 };
+
 
 Framework.prototype.bindLogicalElements = function(father, child){
 
@@ -164,5 +146,3 @@ Framework.prototype.bindLogicalElements = function(father, child){
         child._becomechild(father)
     }
 }
-
-
