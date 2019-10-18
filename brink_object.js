@@ -1,4 +1,4 @@
-function LogicalElement(type) {
+function Element(type) {
 
     // A LogicalElement is the main building block of a Framework
     // A simple Framework might have only 2 LogicalElements:
@@ -19,11 +19,15 @@ function LogicalElement(type) {
 
     // control attributes
     this.maxInstances = maxInstances;
-    this.instances = {}
+    this.instances = {};
+
+    // metadata
+    this.metadata = {};
+
 }
 
 
-LogicalElement.prototype.instanciate = function(title){
+Element.prototype.instanciate = function(title){
 
     testMaxInstances = this.testMaxInstances();
     if (!testMaxInstances) {return;}
@@ -37,7 +41,7 @@ LogicalElement.prototype.instanciate = function(title){
 };
 
 
-LogicalElement.prototype.testMaxInstances = function(){
+Element.prototype.testMaxInstances = function(){
 
     if (this.instances.length === this.maxInstances){
         alert('the maximum number of ' + this.type + 'has already been reached.');
@@ -49,7 +53,7 @@ LogicalElement.prototype.testMaxInstances = function(){
 };
 
 
-LogicalElement.prototype.testTitle = function(title){
+Element.prototype.testTitle = function(title){
 
     if (title in Object.keys(this.logicalElements)){
         alert('There is already a ' + this.type + ' with the title ' + title + '.');
@@ -61,7 +65,7 @@ LogicalElement.prototype.testTitle = function(title){
 };
 
 
-LogicalElement.prototype.testMaxChilds = function(){
+Element.prototype.testMaxChilds = function(){
 
     if (this.childs.length === this.maxChild){
         alert('This ' + title + ' has reached the maximum number of elements depending on him.');
@@ -73,7 +77,7 @@ LogicalElement.prototype.testMaxChilds = function(){
 };
 
 
-LogicalElement.prototype.testMaxFathers = function(){
+Element.prototype.testMaxFathers = function(){
 
     if (this.fathers.length === this.maxFathers){
         alert('This ' + title + ' has reached the maximum number of elements it can depend on.');
@@ -86,26 +90,58 @@ LogicalElement.prototype.testMaxFathers = function(){
 };
 
 
-LogicalElement.prototype._becomeFather = function(child){
+Element.prototype._becomeFather = function(child){
 
     this.childs.push(child);
 
 };
 
 
-LogicalElement.prototype._becomeChild = function(father){
+Element.prototype._becomeChild = function(father){
 
     this.fathers.push(father)
 
 };
 
 
+Element.prototype.getFathers = function(){
 
-LogicalElement.prototype.suggest = function(child){
-    alert('You could add a ' + child.childTypes[0]);
+    
+    
 };
 
 
+Element.prototype.suggest = function(child){
+
+    alert('You could add a ' + child.childTypes[0]);
+
+};
+
+
+
+function Connector(fatherType, childType, logicalNature){
+
+    this.fatherType = fatherType;
+    this.childType = childType;
+    this.logicalNature = logicalNature;
+
+    this.instances = []
+
+    this.fathers = [];
+    this.childs = [];
+}
+
+
+Connector.prototype.instanciate = function(fathers, childs){
+
+    let instance = Object.create(this);
+
+    this.fathers.push(fathers);
+    this.childs.push(childs);
+
+    this.instances.push(instance);
+
+};
 
 
 
@@ -117,24 +153,25 @@ function Framework(name) {
 
     // class components
     this.name = name;
-    this.logicalElements = {};
+    this.elements = {};
+    this.connectors = {};
 
 }
 
 
-Framework.prototype.createLogicalElement = function(type){
+Framework.prototype.createElement = function(type){
 
-    if(type in Object.keys(this.logicalElements)){
-        alert('This framework already has a logical element called ' + type + '.');
+    if(type in Object.keys(this.elements)){
+        alert('This framework already has an element called ' + type + '.');
         return;
     }
 
-    this.logicalElements[type] = new LogicalElement(type);
+    this.elements[type] = new Element(type);
 
 };
 
 
-Framework.prototype.bindLogicalElements = function(father, child){
+Framework.prototype.bindElements = function(father, child){
 
     // A LogicalElement can become father of an other LogicalElement
     // to reflect a logical relation between the 2 elements
@@ -145,4 +182,50 @@ Framework.prototype.bindLogicalElements = function(father, child){
         father._becomeFather(child)
         child._becomechild(father)
     }
+
+    // 
+    connector = new Connector(father, child)
+    this.connectors.push(connector)
 }
+
+
+
+Framework.prototype.getFathers = function(element){
+
+    fathers = [];
+
+    function findFather(connector){
+        if (connector.child === element){
+            fathers = fathers.concat(connector.fathers)
+        }
+    }
+
+    connectors.forEach(findFather);
+
+    // would be useful to remove duplicates
+
+    return fathers;
+
+} 
+
+
+
+Framework.prototype.getChildren = function(element){
+
+    childs = [];
+
+    function findChildren(connector){
+        if (connector.father === element){
+            childs = childs.concat(connector.childs)
+        }
+    }
+
+    connectors.forEach(findFather);
+
+    // would be useful to remove duplicates
+
+    return childs;
+
+} 
+
+
