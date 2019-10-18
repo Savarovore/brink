@@ -1,46 +1,104 @@
 var validInput = document.getElementById('validInput'),
     console_div = document.getElementById('console_div'),
     types = {};
-    index = [];
+
 
 
 
 function Framework(name) {
 
-    // A Framework answers a problem
+    // A Framework is designed to solve a problem in a structured way
+    // Frameworks are used generated and can be stored in public libraries
+    //
 
     // class components
     this.name = name;
+    this.logicalElements = {};
 }
 
 
 
-function LogicalElement(type, childTypes, fatherTypes, max_instances) {
+function LogicalElement(type, creator) {
 
-    // A LogicalElement is the main type of object in a project
-    // In a simple Project with 2 LogicalElements, the first one could be "Problem" 
-    // and the 2nd one "Solution"
+    // A LogicalElement is the main building block of a Framework
+    // A simple Framework might have only 2 LogicalElements:
+    // - the 1st one could have the type "Problem" 
+    // - the 2nd one could have the type "Solution"
+    // A new template is generated using the keyword "new"
+    // Once a template generated, multiple instances can be created using the method "Object.create()"
 
-    // class components
+    // parametrized attributes
     this.type = type;
-    this.childTypes = childTypes;
-    this.fatherTypes = fatherTypes;
-    this.max_instances = 10;
-    this.instances_nb = 0;
+    this.creator = creator;
+
+    // relationship attributes
+    this.childTypes = [];
+    this.fatherTypes = [];
+    this.maxChilds = 100;
+    this.maxFathers = 100;
+
+    // control attributes
+    this.maxInstances = maxInstances;
+    this.instances = []
 }
 
-LogicalElement.prototype.adopt = function(child){
+LogicalElement.prototype.testMaxInstances = function(child){
 
-    // A LogicalElement can adopt as a child an other LogicalElement
-    // to reflect the logical relation between the 2 elements
-    // For example "Problem" could adopt "Solution" as child
+    if (this.instances.length === this.maxInstances){
+        alert('the maximum number of ' + this.type + 'has already been reached.');
+        return;
+    } 
 
-    if(this.childTypes.includes(child.type)){
-        child.father = this;
-        this.childs.push(child);
-    } else {
-        alert(child.title + ' of type ' + child.type + ' can´t result from ' + this.type + ' elements.');
-    }
+};
+
+
+LogicalElement.prototype.testTitle = function(title){
+
+    if (title in Object.keys(this.logicalElements)){
+        alert('There is already a ' + this.type + ' with the title ' + title + '.');
+        return;
+    } 
+
+};
+
+
+LogicalElement.prototype.testMaxChilds = function(){
+
+    if (this.childs.length === this.maxChild){
+        alert('This ' + title + ' has reached the maximum number of elements depending on him.');
+        return;
+    } 
+
+};
+
+
+LogicalElement.prototype.testMaxFathers = function(){
+
+    if (this.fathers.length === this.maxFathers){
+        alert('This ' + title + ' has reached the maximum number of elements it can depend on.');
+        return;
+    } 
+
+};
+
+
+
+LogicalElement.prototype._becomeFather = function(child){
+
+    // A LogicalElement can become father of an other LogicalElement
+    // to reflect a logical relation between the 2 elements
+    // For example "Problem" could become the father of a "Solution"
+    // It is a reciprocal transasctional process
+
+    this.childs.push(child);
+
+};
+
+
+LogicalElement.prototype._becomeChild = function(father){
+
+    this.fathers.push(father)
+
 };
 
 
@@ -65,39 +123,43 @@ LogicalElement.prototype.suggest = function(child){
 };
 
 
-function createLogicalElement (type, childTypes, title){
 
-    // Controls the instanciation of Brinks
-    // si child types n´est pas definit... ?
 
-    if (index.includes(title)){
-        alert('this title is taken.');
-        return;
+
+
+// MODEL FRAMEWORK METHODS
+
+Framework.prototype.createLogicalElement = function(type){
+    if(!(type in Object.keys(this.logicalElements))){
+        this.logicalElements[type] = new LogicalElement(type);
     }
+};
 
-
-    if(!(type in types)){
-        types[type] = new LogicalElement(type, childTypes);
+Framework.prototype.bindLogicalElements = function(father, child){
+    if(father.childTypes.includes(child.type) && child.fatherTypes.includes(father.type)){
+        father._becomeFather(child)
+        child._becomechild(father)
     }
-
-    const template = types[type];
-
-    if(template.instances_nb === template.max_instances){
-        alert('the maximum number of ' + template.type + 'has already been reached.');
-        return;
-    }
-
-    let LogicalElementInstance = Object.create(template);
-    LogicalElementInstance.title = title;
-    LogicalElementInstance.father = "";
-    LogicalElementInstance.childs = [];
-
-    template.instances_nb ++;
-    index.push(title);
-
-
-    return LogicalElement;
 }
+
+
+// INSTANCES FRAMEWORK METHODS
+
+Framework.prototype.instanciateLogicalElement = function(type, title){
+
+    this.testMaxInstances(type);
+    this.testTitle(title);
+
+    const logicalElementTemplate = this.logicalElements[type];
+
+    let logicalElementInstance = Object.create(logicalElementTemplate);
+
+    logicalElementInstance.title = title;
+    logicalElementInstance.fathers = [];
+    logicalElementInstance.childs = [];
+
+    logicalElements[title] = logicalElementInstance;
+};
 
 
 
