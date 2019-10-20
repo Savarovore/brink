@@ -18,12 +18,6 @@ function Element(type, framework) {
     this.framework = framework;
     this.type = type;
 
-    // relationship attributes
-    this.childTypes = []; // the autorized child types when including the Element in a connector  
-    this.fatherTypes = []; // the autorized father types when including the Element in a connector 
-    this.maxChildren = 100;
-    this.maxFathers = 100;
-
     // control attributes
     this.maxInstances = maxInstances;
     this.instances = {};
@@ -75,35 +69,6 @@ Element.prototype.testTitle = function(title){
 };
 
 
-Element.prototype.testMaxChilds = function(){
-
-    children = this.framework.getchildren(this)
-    
-    if (children.length === this.maxChild){
-        alert('This ' + title + ' has reached the maximum number of elements depending on him.');
-        return false;
-    } else {
-        return true;
-    }
-
-};
-
-
-Element.prototype.testMaxFathers = function(){
-
-    fathers = this.framework.getFathers(this)
-
-    if (fathers.length === this.maxFathers){
-        alert('This ' + title + ' has reached the maximum number of elements it can depend on.');
-        return false;
-    } else {
-        return true;
-    } 
-
-    
-};
-
-
 
 Element.prototype.suggest = function(child){
 
@@ -113,20 +78,52 @@ Element.prototype.suggest = function(child){
 
 
 
-function Connector(framework, logicalNature){
+function Connector(framework, fathertypes, childTypes, logicalNature){
 
-    // Connectors must respect the rules (childTypes, fatherTypes) defined at Element level
+    // several similar connections between the same objects? how to control?
+
+    // the connector is a connection between fathers and children
+
     this.framework = framework
-    this.logicalNature = logicalNature; // Qualifies the nature of the link between the Elements
+    this.fatherTypes = fathertypes; 
+    this.childTypes = childTypes; 
+    this.logicalNature = logicalNature;
 
+    // the instances created from a given model
     this.instances = []
 
+    // relationship attributes 
     this.fathers = [];
     this.children = [];
+
+    // potential restiction to allow many to one or one to many etc... 
+    this.maxFathers = 100
+    this.maxChildren = 100
 }
 
 
 Connector.prototype.instanciate = function(fathers, children){
+
+    for (var i=0; i<fathers.length; i++){
+        if (!this.fatherTypes.includes(fathers[i].type)){
+            alert('Connection impossible to ' + fathers[i]);
+            return;
+        }
+    }
+    for (var i=0; i<children.length; i++){
+        if (!this.childTypes.includes(children[i].type)){
+            alert('Connection impossible to ' + children[i]);
+            return;
+        }
+    }
+    if (children.length > this.maxChildren){
+        alert('Too many children to establish a connection');
+        return false;
+    }
+    if (this.maxFathers > fathers.length){
+        alert('Too many fathers to establish a connection');
+        return false;
+    }
 
     let instance = Object.create(this);
 
@@ -137,7 +134,11 @@ Connector.prototype.instanciate = function(fathers, children){
 
 };
 
+Connector.prototype.edit = function(fathers, children){
+    
+    // do we edit or recreate?
 
+}
 
 function Framework(name) {
 
@@ -147,37 +148,34 @@ function Framework(name) {
 
     // class components
     this.name = name;
-    this.elements = {};
-    this.connectors = [];
+    this.elementTemplates = {};
+    this.connectorTemplates = [];
 
 }
 
 
-Framework.prototype.createElement = function(type){
+Framework.prototype.createElementTemplate = function(type){
 
     if(type in Object.keys(this.elements)){
         alert('This framework already has an element called ' + type + '.');
         return;
     }
 
-    this.elements[type] = new Element(type);
+    // the type info is duplicates...
+    this.elementTemplates[type] = new Element(type);
 
 };
 
 
-Framework.prototype.bindElements = function(father, child){
+Framework.prototype.createConnectorTemplate = function(fathertypes, childTypes, logicalNature, maxFathers, maxChildren){
 
     // A LogicalElement can become father of an other LogicalElement
     // to reflect a logical relation between the 2 elements
     // For example "Problem" could become the father of a "Solution"
     // It is a reciprocal transasctional process
 
-    if(father.childTypes.includes(child.type) && child.fatherTypes.includes(father.type)){
-        connector = new Connector(father, child)
-        this.connectors.push(connector)
-    } else {
-        alert('The relation schema must be updated to allow this type of connection.');
-    }
+    connectorTemplate = new Connector(this, fathertypes, childTypes, logicalNature, maxFathers, maxChildren);
+    this.connectorTemplates.push(connectorTemplate);
 
 };
 
