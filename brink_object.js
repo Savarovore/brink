@@ -118,11 +118,11 @@ Connector.prototype.instanciate = function(fathers, children){
     }
     if (children.length > this.maxChildren){
         alert('Too many children to establish a connection');
-        return false;
+        return;
     }
     if (this.maxFathers > fathers.length){
         alert('Too many fathers to establish a connection');
-        return false;
+        return;
     }
 
     let instance = Object.create(this);
@@ -138,6 +138,17 @@ Connector.prototype.edit = function(fathers, children){
     
     // do we edit or recreate?
 
+}
+
+
+Connector.prototype.removeType = function(type){
+
+    for(var i=0; i<this.childTypes.length; i++){ 
+        if (this.childTypes[i] === type) {
+            this.childTypes.splice(i, 1); 
+        }
+     }
+    // then iterate over instances or call method
 }
 
 function Framework(name) {
@@ -167,6 +178,18 @@ Framework.prototype.createElementTemplate = function(type){
 };
 
 
+Framework.prototype.removeElementTemplate = function(type){
+
+    // transform to fanily mode
+    delete this.childTypes.type;
+
+    for (var i = 0; i<this.connectors.length; i++){
+        connectors[i].removeType(type);
+    }
+
+};
+
+
 Framework.prototype.createConnectorTemplate = function(fathertypes, childTypes, logicalNature, maxFathers, maxChildren){
 
     // A LogicalElement can become father of an other LogicalElement
@@ -180,46 +203,60 @@ Framework.prototype.createConnectorTemplate = function(fathertypes, childTypes, 
 };
 
 
+Framework.prototype.getFamilyTypes = function(element, direction){
 
-Framework.prototype.getFathers = function(element){
+    types = [];
 
-    fathers = [];
+    if (direction === 'child'){
+        isChild = true;    
+    } else if (direction === 'father'){
+        isChild = false;   
+    } 
 
-    function findFathers(instance){
-        if (instance.children.includes(element){
-            fathers = fathers.concat(connector.fathers)
-        }        
-    }
-
-    for (var i = 0, iLen=this.connectors.length; i<iLen; i++){
-        instances = this.connectors[i].instances;
-        instances.forEach(findFathers);
+    for (var i = 0; i<this.connectors.length; i++){
+        connector = this.connectors[i]
+        if (isChild){
+            additionalTypes = connector.childTypes    
+        } else if (!isChild){
+            additionalTypes = connector.fatherTypes 
+        }
+        types = types.concat(additionalTypes);
     }
 
     // would be useful to remove duplicates
-    return fathers;
+    return types;
 
 };
 
-Framework.prototype.getChildren = function(element){
 
-    children = [];
+Framework.prototype.getConnectedElements = function(element, direction){
 
-    function findChildren(instance){
+    elements = [];
+
+    function concatFathers(instance){
+        if (instance.children.includes(element){
+            elements = elements.concat(connector.fathers)
+        }        
+    }
+    function concatChildren(instance){
         if (instance.fathers.includes(element){
-            children = children.concat(connector.children)
+            elements = elements.concat(connector.children)
         }        
     }
 
     for (var i = 0, iLen=this.connectors.length; i<iLen; i++){
         instances = this.connectors[i].instances;
-        instances.forEach(findChildren);
+        if (direction === 'father'){
+            instances.forEach(concatFathers);
+        } else if (direction === 'children'){
+            instances.forEach(concatChildren);
+        }
+        
     }
 
     // would be useful to remove duplicates
-    return children;
+    return elements;
 
-} 
-
+};
 
 
