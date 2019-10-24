@@ -71,18 +71,18 @@ Element.prototype.testTitle = function(title){
 
 
 
-function Connector(framework, fathertypes, childTypes, logicalNature){
+function Connector(framework, parenttypes, childTypes, logicalNature){
 
     // several similar connections between the same objects? how to control?
 
     // the connector is a connection between fathers and children
 
     this.framework = framework
-    // fatherTypes and childTypes are own properties of the template object
+    // parenttypes and childTypes are own properties of the template object
     // instances created via Object.create() do not have fatherTypes and childTypes as own properties
     // this enables to modify the types for all instances by only changing the template, 
     // exploiting properties prototyp inheritence
-    this.fatherTypes = fathertypes; 
+    this.parenttypes = parenttypes; 
     this.childTypes = childTypes; 
     this.logicalNature = logicalNature;
 
@@ -90,20 +90,20 @@ function Connector(framework, fathertypes, childTypes, logicalNature){
     this.instances = [];
 
     // relationship attributes 
-    this.fathers = [];
+    this.parents = [];
     this.children = [];
 
     // potential restiction to allow many to one or one to many etc... 
-    this.maxFathers = 100;
+    this.maxParents = 100;
     this.maxChildren = 100;
 }
 
 
-Connector.prototype.instanciate = function(fathers, children){
+Connector.prototype.instanciate = function(parents, children){
 
-    for (var i=0; i<fathers.length; i++){
-        if (!this.fatherTypes.includes(fathers[i].type)){
-            alert('Connection impossible to ' + fathers[i]);
+    for (var i=0; i<parents.length; i++){
+        if (!this.parentsTypes.includes(parents[i].type)){
+            alert('Connection impossible to ' + parents[i]);
             return;
         }
     }
@@ -117,14 +117,14 @@ Connector.prototype.instanciate = function(fathers, children){
         alert('Too many children to establish a connection');
         return;
     }
-    if (this.maxFathers > fathers.length){
-        alert('Too many fathers to establish a connection');
+    if (parents.length > this.maxParents){
+        alert('Too many parents to establish a connection');
         return;
     }
 
     let instance = Object.create(this);
 
-    instance.fathers = fathers;
+    instance.parents = parents;
     instance.children = children;
 
     this.instances.push(instance);
@@ -147,9 +147,9 @@ Connector.prototype.removeType = function(type){
 Connector.prototype.removeTypeElements = function(type){
     
     // explain the direction
-    for(var i=0; i<this.fathers.length; i++){ 
-        if (this.fathers[i] === type) {
-            this.fathers.splice(i, 1); 
+    for(var i=0; i<this.parents.length; i++){ 
+        if (this.parents[i] === type) {
+            this.parents.splice(i, 1); 
         }
     }
     
@@ -207,14 +207,14 @@ Framework.prototype.removeElementTemplate = function(type){
 };
 
 
-Framework.prototype.createConnectorTemplate = function(fathertypes, childTypes, logicalNature, maxFathers, maxChildren){
+Framework.prototype.createConnectorTemplate = function(parenttypes, childTypes, logicalNature, maxParents, maxChildren){
 
-    // A LogicalElement can become father of an other LogicalElement
+    // A LogicalElement can become parent of an other LogicalElement
     // to reflect a logical relation between the 2 elements
-    // For example "Problem" could become the father of a "Solution"
+    // For example "Problem" could become the parent of a "Solution"
     // It is a reciprocal transasctional process
 
-    connectorTemplate = new Connector(this, fathertypes, childTypes, logicalNature, maxFathers, maxChildren);
+    connectorTemplate = new Connector(this, parenttypes, childTypes, logicalNature, maxParents, maxChildren);
     this.connectorTemplates.push(connectorTemplate);
 
 };
@@ -225,11 +225,15 @@ Framework.prototype.getFamilyTypes = function(element, upward){
     types = [];
 
     for (var i = 0; i<this.connectorTemplates.length; i++){
-        connector = this.connectorTemplates[i]
+        connectorTemplate = this.connectorTemplates[i];
         if (upward){
-            additionalTypes = connector.childTypes    
+            if (connectorTemplate.childTypes.includes(element)){
+                var additionalTypes = connectorTemplate.childTypes;
+            }
         } else {
-            additionalTypes = connector.fatherTypes 
+            if (connectorTemplate.parentTypes.includes(element)){
+                var additionalTypes = connectorTemplate.parentTypes; 
+            }
         }
         types = types.concat(additionalTypes);
     }
@@ -240,26 +244,26 @@ Framework.prototype.getFamilyTypes = function(element, upward){
 };
 
 
-Framework.prototype.getConnectedElements = function(element, direction){
+Framework.prototype.getConnectedElements = function(element, upward){
 
     elements = [];
 
-    function concatFathers(instance){
+    function concatParents(instance){
         if (instance.children.includes(element)){
-            elements = elements.concat(connector.fathers)
+            elements = elements.concat(connector.parents)
         }        
     }
     function concatChildren(instance){
-        if (instance.fathers.includes(element)){
+        if (instance.parents.includes(element)){
             elements = elements.concat(connector.children)
         }        
     }
 
     for (var i = 0, iLen=this.connectors.length; i<iLen; i++){
         instances = this.connectors[i].instances;
-        if (direction === 'father'){
-            instances.forEach(concatFathers);
-        } else if (direction === 'children'){
+        if (upward){
+            instances.forEach(concatParents);
+        } else {
             instances.forEach(concatChildren);
         }
         
