@@ -30,10 +30,10 @@ function Element(type, framework) {
 
 Element.prototype.instanciate = function(title){
 
-    testMaxInstances = this.testMaxInstances();
+    let testMaxInstances = this.testMaxInstances();
     if (!testMaxInstances) {return;}
 
-    testTitle = this.testTitle(title);
+    let testTitle = this.testTitle(title);
     if (!testTitle) {return;}
 
     let instance = Object.create(this);
@@ -71,7 +71,7 @@ Element.prototype.testTitle = function(title){
 
 
 
-function Connector(framework, parenttypes, childTypes, logicalNature){
+function Connector(framework, parentTypes, childTypes, logicalNature){
 
     // several similar connections between the same objects? how to control?
 
@@ -82,7 +82,7 @@ function Connector(framework, parenttypes, childTypes, logicalNature){
     // instances created via Object.create() do not have fatherTypes and childTypes as own properties
     // this enables to modify the types for all instances by only changing the template, 
     // exploiting properties prototyp inheritence
-    this.parenttypes = parenttypes; 
+    this.parentTypes = parentTypes; 
     this.childTypes = childTypes; 
     this.logicalNature = logicalNature;
 
@@ -102,7 +102,7 @@ function Connector(framework, parenttypes, childTypes, logicalNature){
 Connector.prototype.instanciate = function(parents, children){
 
     for (var i=0; i<parents.length; i++){
-        if (!this.parentsTypes.includes(parents[i].type)){
+        if (!this.parentTypes.includes(parents[i].type)){
             alert('Connection impossible to ' + parents[i]);
             return;
         }
@@ -172,7 +172,7 @@ function Framework(name) {
     // class components
     this.name = name;
     this.elementTemplates = {};
-    this.connectorTemplates = [];
+    this.connectorTemplates = {};
 
 }
 
@@ -213,19 +213,24 @@ Framework.prototype.createConnectorTemplate = function(parenttypes, childTypes, 
     // to reflect a logical relation between the 2 elements
     // For example "Problem" could become the parent of a "Solution"
     // It is a reciprocal transasctional process
+    if(logicalNature in Object.keys(this.connectorTemplates)){
+        alert('This framework already has a connector called ' + logicalNature + '.');
+        return;
+    }
 
-    connectorTemplate = new Connector(this, parenttypes, childTypes, logicalNature, maxParents, maxChildren);
-    this.connectorTemplates.push(connectorTemplate);
+    let connectorTemplate = new Connector(this, parenttypes, childTypes, logicalNature, maxParents, maxChildren);
+    this.connectorTemplates[logicalNature] = connectorTemplate;
 
 };
 
 
 Framework.prototype.getFamilyTypes = function(element, upward){
 
-    types = [];
+    let types = [];
 
-    for (var i = 0; i<this.connectorTemplates.length; i++){
-        connectorTemplate = this.connectorTemplates[i];
+    // needs to be adapted to the new object structure of connectorTemplates
+    
+    for (const [_, connectorTemplate] of Object.entries(this.connectorTemplates)){
         if (upward){
             if (connectorTemplate.childTypes.includes(element)){
                 var additionalTypes = connectorTemplate.childTypes;
@@ -246,21 +251,21 @@ Framework.prototype.getFamilyTypes = function(element, upward){
 
 Framework.prototype.getConnectedElements = function(element, upward){
 
-    elements = [];
+    let elements = [];
 
     function concatParents(instance){
         if (instance.children.includes(element)){
-            elements = elements.concat(connector.parents)
+            let elements = elements.concat(connector.parents)
         }        
     }
     function concatChildren(instance){
         if (instance.parents.includes(element)){
-            elements = elements.concat(connector.children)
+            let elements = elements.concat(connector.children)
         }        
     }
 
-    for (var i = 0, iLen=this.connectors.length; i<iLen; i++){
-        instances = this.connectors[i].instances;
+    for (const [_, connectorTemplate] of Object.entries(this.connectorTemplates)){
+        let instances = connectorTemplate.instances;
         if (upward){
             instances.forEach(concatParents);
         } else {
