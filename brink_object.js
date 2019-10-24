@@ -19,7 +19,7 @@ function Element(type, framework) {
     this.type = type;
 
     // control attributes
-    this.maxInstances = maxInstances;
+    this.maxInstances = 100;
     this.instances = {};
 
     // metadata is user defined to build richer frameworks
@@ -70,13 +70,6 @@ Element.prototype.testTitle = function(title){
 
 
 
-Element.prototype.suggest = function(child){
-
-    alert('You could add a ' + child.childTypes[0]);
-
-};
-
-
 
 function Connector(framework, fathertypes, childTypes, logicalNature){
 
@@ -85,20 +78,24 @@ function Connector(framework, fathertypes, childTypes, logicalNature){
     // the connector is a connection between fathers and children
 
     this.framework = framework
+    // fatherTypes and childTypes are own properties of the template object
+    // instances created via Object.create() do not have fatherTypes and childTypes as own properties
+    // this enables to modify the types for all instances by only changing the template, 
+    // exploiting properties prototyp inheritence
     this.fatherTypes = fathertypes; 
     this.childTypes = childTypes; 
     this.logicalNature = logicalNature;
 
     // the instances created from a given model
-    this.instances = []
+    this.instances = [];
 
     // relationship attributes 
     this.fathers = [];
     this.children = [];
 
     // potential restiction to allow many to one or one to many etc... 
-    this.maxFathers = 100
-    this.maxChildren = 100
+    this.maxFathers = 100;
+    this.maxChildren = 100;
 }
 
 
@@ -127,18 +124,12 @@ Connector.prototype.instanciate = function(fathers, children){
 
     let instance = Object.create(this);
 
-    this.fathers = fathers;
-    this.children = children;
+    instance.fathers = fathers;
+    instance.children = children;
 
     this.instances.push(instance);
 
 };
-
-Connector.prototype.edit = function(fathers, children){
-    
-    // do we edit or recreate?
-
-}
 
 
 Connector.prototype.removeType = function(type){
@@ -148,8 +139,29 @@ Connector.prototype.removeType = function(type){
             this.childTypes.splice(i, 1); 
         }
      }
-    // then iterate over instances or call method
+
 }
+
+
+
+Connector.prototype.removeTypeElements = function(type){
+    
+    // explain the direction
+    for(var i=0; i<this.fathers.length; i++){ 
+        if (this.fathers[i] === type) {
+            this.fathers.splice(i, 1); 
+        }
+    }
+    
+    for(var i=0; i<this.children.length; i++){ 
+        if (this.children[i] === type) {
+            this.children.splice(i, 1); 
+        }
+    }
+
+}
+
+
 
 function Framework(name) {
 
@@ -167,24 +179,29 @@ function Framework(name) {
 
 Framework.prototype.createElementTemplate = function(type){
 
-    if(type in Object.keys(this.elements)){
+    if(type in Object.keys(this.elementTemplates)){
         alert('This framework already has an element called ' + type + '.');
         return;
     }
 
     // the type info is duplicates...
-    this.elementTemplates[type] = new Element(type);
+    this.elementTemplates[type] = new Element(type, this);
 
 };
 
 
 Framework.prototype.removeElementTemplate = function(type){
 
-    // transform to fanily mode
-    delete this.childTypes.type;
+    // transform to family mode
+    delete this.elementTemplates[type];
 
-    for (var i = 0; i<this.connectors.length; i++){
+    for (var i = 0; i<this.connectorTemplates.length; i++){
+        // remove the connection from the connector templates
         connectors[i].removeType(type);
+        // remove the connection from the connector instances
+        for (var j = 0; j<connectors[i].instances.length; j++){
+            connectors[i].instances[j].removeTypeElements(type);
+        }          
     }
 
 };
@@ -203,21 +220,15 @@ Framework.prototype.createConnectorTemplate = function(fathertypes, childTypes, 
 };
 
 
-Framework.prototype.getFamilyTypes = function(element, direction){
+Framework.prototype.getFamilyTypes = function(element, upward){
 
     types = [];
 
-    if (direction === 'child'){
-        isChild = true;    
-    } else if (direction === 'father'){
-        isChild = false;   
-    } 
-
-    for (var i = 0; i<this.connectors.length; i++){
-        connector = this.connectors[i]
-        if (isChild){
+    for (var i = 0; i<this.connectorTemplates.length; i++){
+        connector = this.connectorTemplates[i]
+        if (upward){
             additionalTypes = connector.childTypes    
-        } else if (!isChild){
+        } else {
             additionalTypes = connector.fatherTypes 
         }
         types = types.concat(additionalTypes);
@@ -234,12 +245,12 @@ Framework.prototype.getConnectedElements = function(element, direction){
     elements = [];
 
     function concatFathers(instance){
-        if (instance.children.includes(element){
+        if (instance.children.includes(element)){
             elements = elements.concat(connector.fathers)
         }        
     }
     function concatChildren(instance){
-        if (instance.fathers.includes(element){
+        if (instance.fathers.includes(element)){
             elements = elements.concat(connector.children)
         }        
     }
@@ -258,5 +269,3 @@ Framework.prototype.getConnectedElements = function(element, direction){
     return elements;
 
 };
-
-

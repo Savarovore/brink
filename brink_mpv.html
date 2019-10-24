@@ -5,9 +5,60 @@
     <title>brink</title>
 </head>
 <body>
-    <input type="text">
-    <button id="validInput" type="button">OK</button>
-    <div id="console_div"></div>
+
+    <div id='frameworks'>
+        <!-- selecting a framework -->
+
+        <h1>Frameworks</h1>
+
+        <div>
+            <h1>Frameworks (click to activate)</h1>
+            <div id="frameworks"></div>
+        </div>
+        
+        <form>
+            New framework: <input type="text" name="frameworkName"><br>
+            <button id="newFrameworkValid" type="button">Create new framework</button>
+        </form>
+
+
+
+    </div>
+
+    <div id='template'>
+        <!-- editing a framework -->
+
+        <h1>Template</h1>
+
+        <div>
+            <h2>Elements (click to generate)</h2>
+            <div id="elements"></div>
+        </div>
+
+        <form>
+            New element: <input type="text" name="elementkName">
+            <button id="newElementValid" type="button">Create new element</button>
+        </form>
+
+        <div>
+            <h2>Connectors (click to generate)</h2>
+            <div id="connections"></div>
+        </div>
+
+        <form>
+            New connector: <input type="text" name="connectorName"><br>
+            <button id="newConnectorValid" type="button">Create new connector</button>
+        </form>
+
+    </div>
+
+
+    <div id="instance">
+        <!-- editing a instance, ie implementation of a framework -->
+
+        <h1>Instance</h1>
+
+    </div>
 </body>
 <script src="brink_object.js" type="text/javascript"></script>
 </html>
