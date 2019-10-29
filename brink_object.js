@@ -69,6 +69,13 @@ Element.prototype.testTitle = function(title){
 };
 
 
+Element.prototype.print = function(){
+
+    var elementDiv = document.createElement('div'),
+        title = document.createTextNode(this.title);
+}
+
+
 
 
 function Connector(framework, parentTypes, childTypes, logicalNature){
@@ -227,8 +234,6 @@ Framework.prototype.createConnectorTemplate = function(parenttypes, childTypes, 
 Framework.prototype.getFamilyTypes = function(element, upward){
 
     let types = [];
-
-    // needs to be adapted to the new object structure of connectorTemplates
     
     for (const [_, connectorTemplate] of Object.entries(this.connectorTemplates)){
         if (upward){
@@ -240,10 +245,13 @@ Framework.prototype.getFamilyTypes = function(element, upward){
                 var additionalTypes = connectorTemplate.parentTypes; 
             }
         }
-        types = types.concat(additionalTypes);
+        additionalTypes.forEach(function(type){
+            if (!(type in types)){
+                types.push(type)
+            } 
+        });
     }
 
-    // would be useful to remove duplicates
     return types;
 
 };
@@ -278,3 +286,51 @@ Framework.prototype.getConnectedElements = function(element, upward){
     return elements;
 
 };
+
+
+Framework.prototype.getRoots = function(upward){
+
+    roots = [];
+
+    for (let i=0; i<this.elementTemplates.length; i++){
+        let elementInstances = this.elementTemplates[i].instances;
+        for (let j=0; j<elementInstances.length; j++){
+            instance = elementInstances[j];
+            connectedElements = this.getConnectedElements(instance, upward);
+            if (parents.length === 0){
+                roots.push(instance);
+            }
+        }
+    }
+
+    return roots;
+
+}
+
+
+Framework.prototype.printTriptic = function(){
+
+    // var destination = document.getElementById();
+    var tripticContainer = document.createElement('div');
+
+    function generateContainer(upward){
+        var container = document.createElement('div'),
+            elements = this.framework.getConnectedElements(true);
+
+        for (var i=0; i<elements.length; i++){
+            elementDiv = elements[i].makeDiv();
+            container.appendChild(parentDiv);
+        }
+
+        return container
+    }
+
+    var parentsContainer = generateContainer(true),
+        childrenContainer = generateContainer(false);
+
+    tripticContainer.appendChild(parentsContainer);
+    tripticContainer.appendChild(childrenContainer);
+    destination.appendChild(tripticContainer);
+
+}
+
