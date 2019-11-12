@@ -4,15 +4,15 @@
 
 function Element(type, framework) {
 
-    // An Element is the main building block of a Framework
-    // A simple Framework might have only 2 Elements:
-    // - the 1st one could have the type "Problem" 
-    // - the 2nd one could have the type "Solution"
-    // A new Element template is generated using the keyword "new"
-    // Once an Element template is generated,
-    // multiple instances can be created using the method "Object.create(myElementTemplate)"
-    // These instances are stored within the template
-    // Several elements can be put in relation through a connector
+    /* An Element is the main building block of a Framework
+     A simple Framework might have only 2 Elements:
+     - the 1st one could have the type "Problem" 
+     - the 2nd one could have the type "Solution"
+     A new Element template is generated using the keyword "new"
+     Once an Element template is generated,
+     multiple instances can be created using the method "Object.create(myElementTemplate)"
+     These instances are stored within the template
+     Several elements can be put in relation through a connector */
 
     // parametrized attributes
     this.framework = framework;
@@ -69,10 +69,25 @@ Element.prototype.testTitle = function(title){
 };
 
 
-Element.prototype.print = function(){
+Element.prototype.makeDiv = function(upward, logicalNature){
 
     var elementDiv = document.createElement('div'),
-        title = document.createTextNode(this.title);
+        title = document.createTextNode(this.title),
+        link = '';
+    
+    if (typeof upward === 'undefined'){
+        elementDiv.appendChild(title);
+    } else if (upward){
+        link = ' ' + logicalNature + ' >> ';
+        elementDiv.appendChild(title);
+        elementDiv.appendChild(document.createTextNode(link));
+    } else if (!upward){
+        link = ' >> ' + logicalNature + ' ';
+        elementDiv.appendChild(document.createTextNode(link));
+        elementDiv.appendChild(title);
+    }
+
+    return elementDiv;    
 }
 
 
@@ -110,13 +125,13 @@ Connector.prototype.instanciate = function(parents, children){
 
     for (var i=0; i<parents.length; i++){
         if (!this.parentTypes.includes(parents[i].type)){
-            alert('Connection impossible to ' + parents[i]);
+            alert('Connection impossible to ' + parents[i] + ' of type ' + parents[i].type + '. This connector includes ' + this.parentTypes);
             return;
         }
     }
     for (var i=0; i<children.length; i++){
         if (!this.childTypes.includes(children[i].type)){
-            alert('Connection impossible to ' + children[i]);
+            alert('Connection impossible to ' + children[i] + ' of type ' + children[i].type + '. This connector includes ' + this.childrenTypes);
             return;
         }
     }
@@ -170,13 +185,14 @@ Connector.prototype.removeTypeElements = function(type){
 
 
 
-function Framework(name) {
+function Framework(name, session) {
 
     // A Framework is designed to solve a problem in a structured way
     // Frameworks are used generated and can be stored in public libraries
     // Frameworks are composed of Elements which together build a logical chain
 
     // class components
+    this.session = session;
     this.name = name;
     this.elementTemplates = {};
     this.connectorTemplates = {};
@@ -259,30 +275,38 @@ Framework.prototype.getFamilyTypes = function(element, upward){
 
 Framework.prototype.getConnectedElements = function(element, upward){
 
-    let elements = [];
+    let elements = {};
 
-    function concatParents(instance){
-        if (instance.children.includes(element)){
-            let elements = elements.concat(connector.parents)
-        }        
-    }
-    function concatChildren(instance){
-        if (instance.parents.includes(element)){
-            let elements = elements.concat(connector.children)
-        }        
+    function concatConnectedElements(connectorInstance){
+        if (upward){
+            if (connectorInstance.children.includes(element)){
+                parents = connectorInstance.parents;
+                for (var i=0; i<parents.length; i++){
+                    if (connectorInstance.logicalNature in elements){
+                        elements[connectorInstance.logicalNature].concat(parents);
+                    }
+                    elements[connectorInstance.logicalNature] = parents;
+                }
+            }                   
+        } else {
+            if (connectorInstance.parents.includes(element)){
+                children = connectorInstance.children;
+                for (var i=0; i<children.length; i++){
+                    if (connectorInstance.logicalNature in elements){
+                        elements[connectorInstance.logicalNature].concat(children);
+                    }
+                    elements[connectorInstance.logicalNature] = children;
+                }
+            }        
+        }     
     }
 
     for (const [_, connectorTemplate] of Object.entries(this.connectorTemplates)){
-        let instances = connectorTemplate.instances;
-        if (upward){
-            instances.forEach(concatParents);
-        } else {
-            instances.forEach(concatChildren);
-        }
-        
+        let connectorInstances = connectorTemplate.instances;
+            connectorInstances.forEach(concatConnectedElements);
     }
 
-    // would be useful to remove duplicates
+    // remove duplicates?
     return elements;
 
 };
@@ -290,15 +314,14 @@ Framework.prototype.getConnectedElements = function(element, upward){
 
 Framework.prototype.getRoots = function(upward){
 
-    roots = [];
+    var roots = [];
 
-    for (let i=0; i<this.elementTemplates.length; i++){
-        let elementInstances = this.elementTemplates[i].instances;
-        for (let j=0; j<elementInstances.length; j++){
-            instance = elementInstances[j];
-            connectedElements = this.getConnectedElements(instance, upward);
-            if (parents.length === 0){
-                roots.push(instance);
+    for (const [_, elementTemplate] of Object.entries(this.elementTemplates)){
+        let elementInstances = elementTemplate.instances;
+        for (const [_, elementInstance] of Object.entries(elementInstances)){
+            let connectionDict = this.getConnectedElements(elementInstance, upward);
+            if (Object.keys(connectionDict).length === 0){
+                roots.push(elementInstance);
             }
         }
     }
@@ -308,29 +331,156 @@ Framework.prototype.getRoots = function(upward){
 }
 
 
-Framework.prototype.printTriptic = function(){
+Framework.prototype.makeDiv = function(isActive){
 
-    // var destination = document.getElementById();
-    var tripticContainer = document.createElement('div');
+    var frameworkDiv = document.createElement('div'),
+        name = document.createTextNode(this.name);
+        frameworkDiv.appendChild(name);
 
-    function generateContainer(upward){
-        var container = document.createElement('div'),
-            elements = this.framework.getConnectedElements(true);
-
-        for (var i=0; i<elements.length; i++){
-            elementDiv = elements[i].makeDiv();
-            container.appendChild(parentDiv);
-        }
-
-        return container
+    if (isActive){
+        frameworkDiv.className = 'active'
+    } else {
+        frameworkDiv.className = 'inactive'
     }
 
-    var parentsContainer = generateContainer(true),
-        childrenContainer = generateContainer(false);
+    var session = this.session,
+        framework = this; 
+    frameworkDiv.addEventListener('click', function(){
+        session.activateFramework(framework);
+    });
+        
+    return frameworkDiv;    
+
+}
+
+Framework.prototype.printTriptic = function(element){
+
+    if (typeof element === 'undefined'){
+        roots = this.getRoots(true);
+        if (roots.length === 0){
+            return;
+        } else {
+            var element = this.getRoots(true)[0];
+        }
+    }
+
+    var destination = document.getElementById('tryptic'),
+        tripticContainer = document.createElement('div');
+
+    function generateContainer(upward, framework){
+        var container = document.createElement('div'),
+            connectionDict = framework.getConnectedElements(element, upward);
+
+        for (const [logicalNature, elements] of Object.entries(connectionDict)){
+            for (var i=0; i<elements.length; i++){
+                var elementDiv = elements[i].makeDiv(upward, logicalNature);
+                container.appendChild(elementDiv);
+            }
+        }
+
+        return container;
+    }
+
+    var parentsContainer = generateContainer(true, this),
+        childrenContainer = generateContainer(false, this),
+        elementContainer = element.makeDiv();
 
     tripticContainer.appendChild(parentsContainer);
+    tripticContainer.appendChild(elementContainer);
     tripticContainer.appendChild(childrenContainer);
     destination.appendChild(tripticContainer);
 
 }
 
+
+
+function Session(user){
+
+    this.user = user;
+    this.frameworks = [];
+    this.activeFramework = "";
+
+}
+
+
+Session.prototype.generateFramework = function (name){ 
+
+    var framework = new Framework(name, this);
+    this.frameworks.push(framework);
+    this.printFrameworks();
+
+}
+
+
+Session.prototype.activateFramework = function(framework){
+
+    // replace by method to avoid multiple references
+    this.activeFramework = framework;
+    this.activeFramework.printTriptic();
+    
+}
+
+
+Session.prototype.printFrameworks = function (){ 
+
+    var frameworks = document.getElementById('frameworks');
+    var frameworkContainer = document.createElement('div');
+
+    for(var i=0; i<this.frameworks.length; i++){
+        var isActive = false;
+        if (this.frameworks[i] === this.activeFramework){
+            isActive = true;
+        }
+        frameworkDiv = this.frameworks[i].makeDiv(isActive);
+        frameworkContainer.appendChild(frameworkDiv);
+    }
+    
+    frameworks.innerHTML = "";
+    frameworks.appendChild(frameworkContainer);
+
+}
+
+Session.prototype.save = function (){ }
+
+
+
+
+
+var frameworkName = document.getElementById('frameworkName'),
+    newFrameworkValid = document.getElementById('newFrameworkValid');
+
+newFrameworkValid.addEventListener('click', function(){
+    s.activeFramework = new Framework(frameworkName.value);
+});
+
+var elementName = document.getElementById('elementName'),
+    newElementValid = document.getElementById('newElementValid');
+
+newElementValid.addEventListener('click', function(){
+    s.activeFramework.createElementTemplate(elementName.value);
+});
+
+
+s = new Session('Julien');
+
+s.generateFramework('Five Whys');
+s.activateFramework(s.frameworks[0]);
+
+s.activeFramework.createElementTemplate('why');
+s.activeFramework.elementTemplates['why'].instanciate('a');
+s.activeFramework.elementTemplates['why'].instanciate('b');
+s.activeFramework.elementTemplates['why'].instanciate('c');
+
+a = s.activeFramework.elementTemplates['why'].instances['a'];
+b = s.activeFramework.elementTemplates['why'].instances['b'];
+c = s.activeFramework.elementTemplates['why'].instances['c'];
+
+s.activeFramework.createConnectorTemplate(['why'], ['why'], 'happened because of', 10, 10);
+s.activeFramework.connectorTemplates['happened because of'].instanciate([a], [b]);
+s.activeFramework.connectorTemplates['happened because of'].instanciate([b], [c]);
+
+
+
+// s.activeFramework.printTriptic(b);
+// var roots = fiveWhys.getRoots(true);
+// fiveWhys.printTriptic(roots[0]);
